@@ -9,7 +9,8 @@ object Main extends App {
   println(names.map(name => name.toUpperCase))
   println(names.lastOption)
   println(End().lastOption)
-  println(list1 ++ list2)
+//  println(list1 ++ list2)
+  println(names.flatmap(name => Node(name.head.toString, Node(name.tail, End()))))
 }
 
 sealed trait MyList[T] {
@@ -79,19 +80,21 @@ sealed trait MyList[T] {
     }
 
   def ++(that: MyList[T]): MyList[T] = {
+
+    def getNewTail(thisTail: MyList[T]) =
+      thisTail match {
+        case Node(_, _) =>
+          thisTail ++ that // Recursive step
+        case End() =>
+          that
+      }
+
     this match {
       case Node(thisHead, thisTail) =>
         that match {
           case Node(_, _) =>
-            val newTail =
-              thisTail match {
-                case Node(_, _) =>
-                  thisTail ++ that
-                case End() =>
-                  that
-              }
-            val concatenatedLists = Node(thisHead, newTail)
-            concatenatedLists
+            val newTail: MyList[T] = getNewTail(thisTail)
+            Node(thisHead, newTail)
           case End() =>
             this
         }
@@ -100,6 +103,12 @@ sealed trait MyList[T] {
     }
   }
 
+  /**
+   * flatMap takes a function that turns an object of type T into a MyList (collection) of type U, and concatenates the new MyList to the MyList that called flatMap (this)
+   * @param func function applied to every object in MyList[T}, converts object of type T into MyList[U]
+   * @tparam U
+   * @return a flattened MyList[U]
+   */
   def flatmap[U](func: T => MyList[U]): MyList[U] =
     this match {
       case Node(h, t) =>
